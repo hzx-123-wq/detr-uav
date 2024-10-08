@@ -1,0 +1,39 @@
+# Ultralytics YOLO 🚀, AGPL-3.0 license
+# RT-DETR-l object detection model with P3-P5 outputs. For details see https://docs.ultralytics.com/models/rtdetr
+
+# Parameters
+nc: 10  # number of classes
+scales: # model compound scaling constants, i.e. 'model=yolov8n-cls.yaml' will call yolov8-cls.yaml with scale 'n'
+  # [depth, width, max_channels]
+  l: [1.00, 1.00, 1024]
+
+# From BiliBili 魔鬼面具
+backbone:
+  # [from, repeats, module, args]
+  - [-1, 1, starnet_s2, [True]]
+head:
+  - [-1, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 8 input_proj.2
+  - [-1, 1, AIFI, [1024, 8]] # 9
+  - [-1, 1, Conv, [256, 1, 1]]  # 10, Y5, lateral_convs.0
+
+  - [-1, 1, DySample, [2, 'lp']] # 11
+  - [3, 1, Conv, [256, 1, 1, None, 1, 1, False]]  # 12 input_proj.1
+  - [[-2, -1], 1, Concat, [1]] # 13
+  - [-1, 1, DGCST2, [256]] # 14, fpn_blocks.0
+  - [-1, 1, Conv, [128, 1, 1]]   # 15, Y4, lateral_convs.1
+
+  - [-1, 1, DySample, [2, 'lp']] # 16
+  - [1, 1, SPDConv, [128]] # 17
+  - [[-1, -2, 2], 1, Concat, [1]] # 18
+  - [-1, 1, CSPOmniKernel, []] # 19
+  - [-1, 1, DGCST2, [256]]  # 20
+
+  - [-1, 1, Conv, [256, 3, 2]] # 21
+  - [[-1, 12], 1, Concat, [1]] # 22
+  - [-1, 1, DGCST2, [256]] # 23
+
+  - [-1, 1, Conv, [256, 3, 2]] # 24
+  - [[-1, 7], 1, Concat, [1]] # 25
+  - [-1, 1, DGCST2, [256]]  # 26
+
+  - [[17, 20, 23], 1, RTDETRDecoder, [nc, 256, 300, 4, 8, 3]]  # RTDETRDecoder(P3, P4, P5)
