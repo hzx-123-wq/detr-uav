@@ -14,5 +14,5 @@ if __name__ == '__main__':
                 device='0',
                 # resume='', # last.pt path
                 project='runs/train',
-                name='detr-SOEP-TEST',
+                name='your name',
                 )
